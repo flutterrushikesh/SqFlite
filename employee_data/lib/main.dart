@@ -13,16 +13,16 @@ class EmployeeData {
 
   Map<String, dynamic> empData() {
     return ({
-      'name': name,
-      'empID': empId,
-      'empSal': sal,
+      'empId': empId,
+      'sal': sal,
+      'eName': name,
     });
   }
 }
 
 Future<void> insertEmpData(EmployeeData emp) async {
   final localDB = await database;
-  localDB.inset(
+  localDB.insert(
     'Employee',
     emp.empData(),
     conflictAlgorithm: ConflictAlgorithm.replace,
@@ -31,8 +31,17 @@ Future<void> insertEmpData(EmployeeData emp) async {
 
 Future<List<Map<String, dynamic>>> getEmpData() async {
   final localDB = await database;
-  List<Map<String, dynamic>> empEntry = localDB.query("Employee");
+  List<Map<String, dynamic>> empEntry = await localDB.query("Employee");
   return empEntry;
+}
+
+Future<void> deleteEmpData(EmployeeData emp) async {
+  final localDB = await database;
+  await localDB.delete(
+    "Employee",
+    where: "empId = ?",
+    whereArgs: [emp.empId],
+  );
 }
 
 void main() async {
@@ -44,8 +53,9 @@ void main() async {
     onCreate: (db, version) {
       db.execute('''CREATE TABLE Employee (
       empId INT PRIMARY KEY,
-      eName TEXT,
       sal REAL 
+      eName TEXT,
+      
       )''');
     },
   );
@@ -65,7 +75,36 @@ void main() async {
   EmployeeData emp5 = EmployeeData(empId: 32, sal: 3.1, name: "Yogesh");
   insertEmpData(emp5);
 
-  print(getEmpData());
+  List retData = await getEmpData();
+  for (int i = 0; i < retData.length; i++) {
+    print(retData[i]);
+  }
+
+  await deleteEmpData(emp1);
+  await deleteEmpData(emp4);
+  await deleteEmpData(emp5);
+
+  print("After delete");
+  retData = await getEmpData();
+  for (int i = 0; i < retData.length; i++) {
+    print(retData[i]);
+  }
+
+  EmployeeData emp8 = EmployeeData(empId: 59, sal: 2.5, name: "Suresh");
+  insertEmpData(emp8);
+  print("update entry");
+  retData = await getEmpData();
+  for (int i = 0; i < retData.length; i++) {
+    print(retData[i]);
+  }
+
+  EmployeeData emp9 = EmployeeData(empId: 98, sal: 4.2, name: "Rupesh");
+  insertEmpData(emp9);
+  print("New entry");
+  retData = await getEmpData();
+  for (int i = 0; i < retData.length; i++) {
+    print(retData[i]);
+  }
 }
 
 class MyApp extends StatelessWidget {
